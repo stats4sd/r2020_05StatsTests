@@ -19,7 +19,7 @@ library(ggplot2)
 library(dplyr)
 library(janitor)
 
-SurveyData<-readRDS("SurveyData.RDS")
+SurveyData<-read.csv("SurveyData.csv")
 
 
 ```
