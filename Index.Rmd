@@ -427,6 +427,9 @@ But 'getting data in the appropriate format' and 'checking the assumptions for t
 
 This is, of course, not just true of R but of any analysis software. However with R there is even less of an excuse for doing this since all of the tools needed to prevent it are provided and freely available. This is why we have placed so much emphasis in this course on data manipulation (dplyr), exploratory graphics (ggplot2) and using a coherent and reproduceable workflow (RStudio). 
 
+When doing a PhD, it is also extremely unlikely that a simple hypothesis test will be sufficient for your analysis. It is likely you will need to be doing some statistical modelling, to better explain the patterns and trends in your data. We will learn about this in the next module!
+
+
 ## Appendix: Setup for session
 
 
