@@ -52,11 +52,7 @@ Equally it can also be tempting to try out some niche, new & sexy analysis metho
 
 [EMBED VIDEO]
 
-If you read the R for Data Science book, they will often refer to this diagram showing the process of data analysis:
 
-[embed image]
-
-It can be tempting to skip steps, but all of the components in there are vital to ensure that you are really thinking through the process in the best possible way, so that you can try to make robust and coherent conclusions from your data.
 
 The standard application of a two sample t-test would be when we have a scenario where we want to compare whether there is a difference in the means of a numeric variable across two groups. So, if we think back to our `Pulse` dataset - let's say we wanted to compare whether perceived attractiveness of the respondents, `Attractiveness`, varied by gender, `Gender`.
 
@@ -436,7 +432,7 @@ This is, of course, not just true of R but of any analysis software. However wit
 
 Starting with this session, all of the exercises in this course are only going to be available offline in an RMD workbook. So if you have skipped ahead of Module 4 - you will need to go back now and make sure you have RStudio up and running on your own machine!
 
-A zip file containing the files used in this session is available here. [LINK]
+A zip file containing the files used in this session is available [here]( https://github.com/stats4sd/r2020_05StatsTests/raw/main/Module5-StatsTests.zip)
 If you extract these into a folder, and set up an RStudio project based on that folder you will be able to follow along with the tutorial.
 
 The packages used in this session are `ggplot2`, `dplyr` and `janitor`. Make sure these are all installed and loaded before beginning the session. 
