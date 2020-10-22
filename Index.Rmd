@@ -86,11 +86,7 @@ Pulse %>%
 
 **Histograms of Attractiveness by Gender**
 
-```{r summaryplot-solution}
-ggplot(data=Pulse,aes(x=Attractiveness))+
-    geom_histogram()+
-      facet_wrap(~Gender)
-```
+
 
 ```{r,echo=FALSE,message=FALSE}
 ggplot(data=Pulse,aes(x=Attractiveness))+
@@ -102,6 +98,11 @@ ggplot(data=Pulse,aes(x=Attractiveness))+
 
 ```
 
+```{r summaryplot-solution}
+ggplot(data=Pulse,aes(x=Attractiveness))+
+    geom_histogram()+
+      facet_wrap(~Gender)
+```
 
 Initially by looking at the summary stats and the plots we can already see that there doesn't look like there is much noticeable difference between the attractiveness ratings of males and females in the survey. The mean is very similar, as is the standard deviation. And the pattern in the overall distribution as seen by the histograms is also similar.
 So it would be quite surprising if, when we come to run a t-test, that we found we had a significant difference here.
