@@ -345,7 +345,7 @@ Before we deal with that, and talk more about the assumptions about the chi-squa
 
 Piping from the table of proportions *does not give an error* but the results it returns *are nonsense*.
 
-```{r chi1,exercise=TRUE}
+```{r chi1_fail,exercise=TRUE}
 Pulse %>%
   tabyl(Education,ApproveTrump) %>%
      adorn_percentages() %>%
