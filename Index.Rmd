@@ -35,33 +35,35 @@ Doing the standard statistics hypothesis tests in R is pretty easy! In this work
 
 In general these simple tests can be a useful starting point, but are very limited in what they can tell you. We will talk more about statistical modeling in R on the final module, which is an approach which can be extended and built upon in lots of much more interesting and useful ways than these simple tests.
 
-We are going to use the same survey dataset we looked at earlier in the course when working with ggplot2. The data is embedded at the end of this workbook if you want a refresher on what this data contains, and how the variables are named.
+We are going to use the same `Pulse` dataset we looked at earlier in the course when working with ggplot2. The data is embedded at the end of this workbook if you want a refresher on what this data contains, and how the variables are named.
 
 ## t tests
 
 There are lots of resources walking through the basic mechanics of the t-test in R.
+https://uc-r.github.io/t_test#twosample
 
-I'm a fan of the videos by Mike Marin. He makes concise and clear videos hitting on they key aspects of lots different analysis methods in R. You can see his video on the t-test [here](https://www.youtube.com/watch?v=RlhnNbPZC0A)  
+As you will see, the functions themselves for the standard statistical hypothesis tests you may have learnt about in your statistics classes are pretty straightforward. And, you may be pleased to hear, there are not many new functions to learn in this module.
 
-If you head to his YouTube channel, you will find hundreds of other short videos on specific topics within R covering lots of different analysis methods. In particular you may be interested in his "Data Analysis for R" playlists [here](https://www.youtube.com/c/marinstatlectures/playlists?view=50&sort=dd&shelf_id=14).
+However, it is extremely important to use these functions in the correct context, as part of an appropriate analysis workflow and knowing what to do when results are unexpected.
 
+We have recorded some videos on this topic, which take the approach of walking you through the thought process of incorporating hypothesis tests into a data analysis task using R. Thinking about what you are doing, and what it means, and how it can be improved. And not just defaulting into doing a t-test because you were taught this in your "Introduction to Statistics" class! 
 
-We have also recorded some videos on this topic, which take a slightly different approach to this topic. Instead of an 'instructional' or 'lecture' in these videos I am trying to walk you through the full thought process of incorporating hypothesis tests into your data analysis using R. It is extremely important to think about what you are doing, and what it means, and how it can be improved rather than defaulting into doing a t-test because you were taught this in your "Introduction to Statistics" class! 
-
-Equally it can also be tempting to try out some niche, new & sexy analysis method that you read about in a paper without critically thinking about whether this would actually work with your own data or be useful for your objectives.
+Equally, it can also sometimes be tempting to try out some niche, new & sexy analysis method that you read about in a paper without critically thinking about whether this would actually work with your own data or be useful for your objectives. So there is a balancing act.
 
 [EMBED VIDEO]
 
 
 
-The standard application of a two sample t-test would be when we have a scenario where we want to compare whether there is a difference in the means of a numeric variable across two groups. So, if we think back to our `Pulse` dataset - let's say we wanted to compare whether perceived attractiveness of the respondents, `Attractiveness`, varied by gender, `Gender`.
+The standard application of a two sample t-test would be when we want to compare whether there is a difference in the means of a numeric variable across two groups.
+
+So, if we think back to our `Pulse` dataset - we could compare perceived attractiveness of the respondents, `Attractiveness`,  gender, `Gender`.
 
 ### Preliminary Analysis
 
-Before we jump straight into conducting a t-test we should always explore our data a little bit first. By calculating summary statistics and producing plots showing the distribution. 
+We should always explore our data a little bit first by calculating summary statistics and producing plots showing the distribution. 
 And this is the perfect chance to apply and recap all your newly acquired ggplot2 and dplyr skills! 
 
-*Write the code below which will match the embedded output, to show the means and standard deviations of `Attractiveness` by `Gender`; and then in the second chunk produce some histograms of the distribution of `Attractiveness` with seperate panels for each `Gender`.*
+*Write the code below which will match the embedded output, to show the means and standard deviations of `Attractiveness` by `Gender`; and then in the second chunk produce some histograms of the distribution of `Attractiveness` with separate panels for each `Gender.*
 
 **Summary Statistics of Attractiveness by Gender**
 ```{r summarystats, exercise=TRUE}
@@ -104,15 +106,14 @@ ggplot(data=Pulse,aes(x=Attractiveness))+
       facet_wrap(~Gender)
 ```
 
-Initially by looking at the summary stats and the plots we can already see that there doesn't look like there is much noticeable difference between the attractiveness ratings of males and females in the survey. The mean is very similar, as is the standard deviation. And the pattern in the overall distribution as seen by the histograms is also similar.
+Looking at the summary stats and the plots we can already see that there doesn't look like there is much noticeable difference between the attractiveness ratings of males and females in the survey! Both the means and the distributions are virtually identical.
+
 So it would be quite surprising if, when we come to run a t-test, that we found we had a significant difference here.
 
 
 ### Running the t-test
 
-The structure of the t.test function is that we tell it the name of our numeric variable (`Attractiveness`) followed by a tilde (`~`) followed by the name of our 2 level grouping variable (`Gender`). 
-We also have to tell it what data we are using in a separate argument.
-
+The structure of the `t.test` function is that we provide the name of our numeric variable (`Attractiveness`), followed by a tilde (`~`), followed by the name of our 2 level grouping variable (`Gender`). 
 
 ```{r ttest1, exercise=TRUE}
 t.test(Attractiveness~Gender,data=Pulse)
@@ -125,36 +126,51 @@ It's worth reminding yourself of how p-values work - they are very commonly misu
 
 And that's it! We have done our t-test.
 
-However there are important considerations to make when running a t-test, to consider if it is an appropriate method to use and if the results are likely to be valid. Although there is one assumption you were probably taught about when learning the t test that you do not need to worry about here...
+With the `t.test` function it is important to note that, unlike functions from `ggplot2` and `dplyr`, the name of the data comes as the second argument *after* the formula. This means that we would use pipes to get from the data to the t-test, but we need to use them in a slightly different way. The pipe always assumes the first argument of the function inherits the data from the previous step. But we can override this by using a `.` for any argument which is not the first argument. Like this:
+
+```{r}
+Pulse %>%
+  t.test(Attractiveness~Gender,data=.)
+
+```
+
+
+And there are also other more practical things to consider when running a t-test, thinking about whether the hypothesis and the assumptions underlying it are sensible. And we should know what to do if we do encounter anything that makes us question the validity of the methods.
+
+However, there is actually one assumption you were probably taught about when learning the t test that you do not need to worry about at all when using the `t.test` function in R.
 
 ### Assumption 0: Equal Variance 
 
 The result you obtain by default from the t.test function is not exactly the same as you would see in other software packages, because R has slightly different default settings.
 
-When learning about the t-test one of the assumptions you are told is that you should have approximately "equal variance" within your two groups. However, by R uses a "Welch" t-test, which is a modification to the classic t-test which does not require equal variance. So usually we don't actually make the equal variance assumption when running a t-test in R.
+You probably learnt that you need to have approximately "equal variance" within your two groups for a t-test to be valid. However, by default R uses a "Welch" t-test. This is a modification to the classic t-test which does not require equal variance. 
 
-There is no real reason not to use this modification - if the variances are equal then both the classic and Welch t-tests will provide identical results. But if the variances are not equal the classic t-test results will not be valid where the Welch t-test results would be. 
+There is no real reason not to use this modification. If the variances are exactly equal then both the classic and Welch t-tests will provide identical results; and when the variances are very similar the differences between the results are trivial.
+
+But if the variances are not similar the classic t-test results would not be valid where the Welch t-test results would be. 
 
 But, if you really love the classic t-test, or just want to check to match the results from other software which have different defaults then you can add the argument `var.equal = TRUE` into the code)
 
 ```{r ttest, exercise=TRUE}
 t.test(Attractiveness~Gender,data=Pulse,var.equal=TRUE)
 ```
-As you can see, if you go back and compare the results to the previous output, the value of the t-statistic, and degrees of freedom change very slightly, but the p-value is the same to 4 decimal places. Because in this case the variance of the two groups is almost identical, as we saw from the summary statistics, so the two alternatives provide the same result.
+
+As you can see, if you go back and compare the results to the previous output, the value of the t-statistic, and degrees of freedom change very slightly, but the p-value is the same to 4 decimal places. The variance of the two groups is almost identical, as we saw from the summary statistics, so the two alternatives provide almost exactly the same output.
 
 
 ### Assumption 1: Independence
 
-Probably the most important assumption to consider is whether or not the observations are independent of each other in the two groups. The simplest example of this is when we have paired assumptions.
+Probably the most important assumption to consider is whether or not the observations are independent of each other in the two groups. The simplest example of this is when we have paired data.
 
-There isn't a good example to demonstrate this within the `Pulse` dataset - so let's quickly consider a different scenario. Let's say where 10 people are asked to rate their attractiveness prior to attending a self esteem seminar. After completing the seminar, they are then asked to assess their own attractiveness again. I have imported the results from this made up experiment into R as a data frame called `selfesteem`
+There isn't a good example to demonstrate this within the `Pulse` dataset - so let's quickly consider a different scenario but with a similar variable.
+
+Let's say where 10 people are asked to rate their attractiveness prior to attending a self esteem seminar. After completing the seminar, they are then asked to assess their own attractiveness again. I have imported the results from this made up experiment into R as a data frame called `selfesteem`
 
 ```{r,echo=FALSE}
 datatable(selfesteem)
 ```
 
-
-We would like to know if the seminar has had any impact, so we can test the hypothesis that the average score has changed between the pre and post assessments. In this case we have paired samples - from the 10 participants - so results are not independent; making a 'classic' t-test would be inappropriate. 
+We would like to know if the seminar has had any impact, so we can test the hypothesis that the average score has changed between the pre and post assessments. In this case we have paired samples - from the 10 participants. So results from the two groups are definitely not independent; making a 'classic' t-test would be inappropriate. 
 
 But there is a paired t-test we can use, also using the same `t.test` function, but with a slightly different way of specifying the inputs.
 
@@ -163,17 +179,26 @@ But there is a paired t-test we can use, also using the same `t.test` function, 
 t.test(selfesteem$AttractivenessBefore, selfesteem$AttractivenessAfter, paired=TRUE)
 ```
 
-But we can also have more complicated violations of independence, which can't be so easily fixed. Particularly when we consider having more than two matched observations (e.g. data taken over multiple time points), experimental designs with blocking, or clustered sampling in surveys. In this case the t-test is not at all a sufficient method for analysis! So, you will have to start learning more about statistical modeling to do a good job of analysing your data.
+But there are more complicated violations of independence, which can't be so easily fixed. 
+
+Particularly when we consider having more than two matched observations (e.g. data taken over multiple time points); experimental designs with blocking; or clustered sampling in surveys. 
+
+In this case the t-test is not at all a sufficient method for analysis! So, you will have to start learning more about statistical modeling to do a good job of analysing your data - and matching the appropriate model structure to your data structure.
 
 
 ### Assumption 2: Normality
 
-We also have another assumption that we have approximate normality of the response with each group. The key word here is 'approximate' - and the more data that we have the more approximate the normality of the distribution needs to be for the t-test to be valid. This is known as the 'central limit theorem'. Again, Dr Nic, is on call with a video about this [here](https://www.youtube.com/watch?v=_YOr_yYPytM&ab_channel=DrNic%27sMathsandStats)
+We also have another assumption that we have approximate normality of the response with each group. The key word here though is 'approximate';  a lot of people can get very hung up on whether they have a perfectly normal distributions. In fact, as we increase the size of our data, the t-test will still be valid with increasingly non-normal looking distributions. This is known as the 'central limit theorem'.
 
-It is usually worth checking the histogram to check that we have a roughly symmetrical distribution, with is unimodal. There are formal hypothesis tests we could use to 'test' normality, that some people might teach you about.
-These are all pretty much pointless, a waste of your time in this context. The would test whether you had 'exact' normality. The more data we have the more likely we are able to identify that something is not 'exactly' normal.
+Again, Dr Nic, is on call with a video about this [here](https://www.youtube.com/watch?v=_YOr_yYPytM&ab_channel=DrNic%27sMathsandStats)
 
-This is the exact opposite set of conditions to the assumption behind the t-test, where the more data we have the less important it is for the data to be exactly normally distributed!
+It is usually worth checking the histogram to check that we have a roughly symmetrical distribution, with is also unimodal. 
+
+There are formal hypothesis tests we could use to 'test' normality, that some people might teach you about. But these are completely useless within this context.
+
+There is no assumption requiring 'exact' normality. And using the tests of normality, the more data that we have the more likely we are able to identify that something is not 'exactly' normal. This is the exact opposite of what we need to satisfy this assumption of the t-test, because of the central limit theorem!
+
+So simply visually inspecting the distributions from a histogram, is usually sufficient for us when we consider if our data can meet this assumption.
 
 With the attractiveness variable, we saw from the histograms that, although definitely not exactly normal, it is probably close enough for our purposes. Fairly unskewed, no outliers, unimodal and roughly symmetrical.
 
@@ -182,10 +207,12 @@ ggplot(data=Pulse,aes(x=Attractiveness))+
     geom_histogram()+
       facet_wrap(~Gender)
 ```
+
+However, with very non-normal distributions you do also have issues to consider about whether the hypothesis of the t-test makes self. The mean value may not be a sensible parameter to be comparing when thinking about heavily skewed distributions, or non-unimodal distributions. So it is worth being aware of alternatives.
+
 ### Non-Parametric Alternative: Wilcoxon Test
 
-However if we were to change our hypothesis and instead consider whether there was a relationship between gender and income, then we may see both a more interesting question, but also some more potential issues to worry about.
-
+Annual income is a variable which will nearly always be heavily skewed in data covering a wide population. Let's think about comparing `Income` by `Gender` from our Pulse dataset.
 
 ```{r hist2, exercise=TRUE}
 ggplot(data=Pulse,aes(x=Income))+
@@ -193,7 +220,9 @@ ggplot(data=Pulse,aes(x=Income))+
       facet_wrap(~Gender)
 ```
 
-Although it is a unimodal, there is a huge skew in the distributions. A result of a small number of people reporting very large incomes. In this case, we do have a severe violation of normality. We may not feel confident invoking the central limit theorem where we have such a skewed distribution, with only a moderately sized dataset. We would also see a huge difference between the mean incomes by gender, and the median incomes by gender.
+Although it is a unimodal, there is a huge skew in the distributions. A result of a small number of people reporting very large incomes. 
+
+In this case, we do have a severe violation of normality. We may not feel confident invoking the central limit theorem, or thinking about whether the 'mean' income is a sensible parameter to compare. 
 
 *Write some code below to calculate the mean and median incomes by gender.*
 
@@ -208,9 +237,7 @@ Pulse %>%
     summarise(mean=mean(Income),median=median(Income))
 ```
 
-If you have the correct results you should see that the mean income for females is more than 10,000USD/year higher than the median income; and for males the mean is more than 20,000USD/year higher than the median.
-
-And looking at the results, the differences by gender do not appear trivial, unlike with the attractiveness variable, so we may be interested in exploring more and being confident that these differences in the data do indeed represent differences in reality.
+You should see that the difference between the median income of males and females (10,000 USD) is less than half of the difference between the mean income become males and females (21,475 USD). A small number of the male respondents earn a lot of money, which is dragging up the mean value within that group substantially. So doing any test which compares means may over-state the real practical implications of the difference in incomes.
 
 R will not stop us from running a t-test here, and there will be no errors or warnings.
 
@@ -218,38 +245,36 @@ R will not stop us from running a t-test here, and there will be no errors or wa
 t.test(Income~Gender,data=Pulse)
 ```
 
-We do obtain a result suggesting that the difference in income is statistically significant, p=0.003. But given what we have seen in the previous histogram this result we cannot be completely confident in the validity of this finding.
+We do obtain a result suggesting that the difference in income is statistically significant, p=0.003. 
 
-In this case, with the non-normal underlying distributions, we could consider a non-parametric alternative, the Wilcoxon Test. 
+But this might be a case where we could consider a non-parametric alternative, the Wilcoxon Rank-Sum Test (also known sometimes as the Mann-Whitney U test). 
 
-This works by ranking the values in each group and comparing the average ranks in the two groups. Therefore it is very robust to all sorts of strange looking distributions, because the maximum value can never be more than one unit higher than the next highest value. 
+This works by ranking the values in each group and comparing the average ranks in the two groups. This makes it robust to all sorts of strange looking distributions, because the maximum value can never be more than one unit higher than the next highest value. 
 
-However, it does have less statistical power than a t-test, which is why when we are able to meet that assumption the t-test is preferred. It also has a much more complicated null hypothesis that we are testing against when trying to conceptualise or explain what the test is showing.
+However, it does have less statistical power to detect differences between groups than a t-test, which is why the t-test is often preferred.
 
-Luckily, the code for `wilcox.test` function is almost identical to what we have seen already with `t.test` so switching to this non-parametric method is simple.
+Luckily, within R, the code for `wilcox.test` function is almost identical to what we have seen already with `t.test`. So switching to non-parametric stats is simple! We just change `t.` to `wilcox.`.
 
 ```{r wilcox1,exercise=TRUE}
 wilcox.test(Income~Gender,data=Pulse)
 ```
 
-And here we do get very strong evidence, p=0.0008, from a valid method, against the null hypothesis that distribution of incomes for males is the same as incomes for females. 
+And here we do get very strong evidence, p=0.0008 against the null hypothesis that distribution of incomes for males is the same as incomes for females. So this provides further reinforcement of our initial conclusion from the t-test.  
 
-Note in the output that this is described as "location shift" - this is another way of considering the 'mean of the ranks'. 
-Mike Marin has a video explaining more about the Wilcoxon test [here](https://www.youtube.com/watch?v=KroKhtCD9eE)
+Note in the output that the hypothesis is described in the output as "location shift" - this is another way of considering the 'mean of the ranks'. Another way of framing it for this specific test would be that our significant result suggests that males are more likely to have incomes which are higher than the median income. 
+Because of the existence of ties, the Wilcoxon test does not directly compare the median values. In the video, you see an example where the medians of the two groups are the same but the Wilcoxon test provides a significant result.
 
+If you haven't come across it before, you can read more about the Wilcoxon rank sum test [here](https://www.stat.auckland.ac.nz/~wild/ChanceEnc/Ch10.wilcoxon.pdf). 
 
 ## Chi-square test
 
-Another common, simple statistical test that you come across is the chi-square test. 
-We use this when we want to compare whether or not there is a relationship between two categorical variables.
-As I'm sure you have guessed, Mike Marin has a video explaining this test [here](https://www.youtube.com/watch?v=POiHEJqmiC0&ab_channel=MarinStatsLectures-RProgramming%26Statistics)
+Another common, simple statistical test is the chi-square test. We use this when we want to compare whether or not there is a relationship between two categorical variables.
 
+In this workbook I am going to demonstrate using the `janitor` library for this sort of analysis. This allows you to produce tables, percentages, and chi-square tests in the same tidyverse style as `dplyr`.
 
-However this video is a little old, from 2013, and since this was made there have been some improvements to the way it is possible to perform cross tabulations and hypothesis tests of categorical association.
+As this is quite a new package, when you look online there are not many resources which take this particular approach, and you will instead see other functions, like `table` or `prop.table` being used. There is always more than one way to do something in R. For me the `janitor` approach is actually much more straightforward to follow than the traditional approach.
 
-In this workbook I am going to demonstrate using the `janitor` library for this sort of analysis. This allows you to produce tables, percentages, and chi-square tests in the same tidyverse style as `dplyr`, instead of using some of the slightly tricky base R functions like `table` and `prop.table`.
-
-So, as an example, we may be interested in the relationship between education level, `Education`, and support for Donald Trump `ApproveTrump`.
+So, as an example, we may be interested in the relationship between education level, `Education`, and support for Donald Trump, `ApproveTrump`.
 
 ### Preliminary analysis
 
@@ -267,8 +292,8 @@ The first variable will always be placed in the rows of the table, and the secon
 Try to intepret those numbers from the frequency table output, and see if you think there is a pattern. It is hard! With cross-tabs it can be pretty difficult to work out if there is a pattern from just the numbers themselves. 
 
 So we often will also look at marginal percentages. That: is for each level of one variable what percentage of respondents fall in the levels of the second variable. 
-We refer to these as "row percentages" or "column percentages", depending on whether we are looking at the percentages within each row or percentages within each column. 
-We can pipe the frequency table into the function `adorn_percentages` to investigate this.
+
+We refer to these as "row percentages" or "column percentages", depending on whether we are looking at the percentages within each row or percentages within each column. We can pipe the frequency table into the function `adorn_percentages` to investigate this.
 
 I.e. We can either ask for "What percentage of people with "High School or Less" education approve of Donald Trump?" This is the 'row percentage' because we are looking within education levels, and education is the row factor. The row percentage is the default option, so we don't need to add anything else to this function.
 
@@ -304,8 +329,7 @@ Just consider those numbers for a second. High school only educated people are *
 
 We always have to think carefully about which percentages are being calculating, and thinking about which would make the most sense to interpret. 
 
-In this case, the row percentages would be likely much more helpful to us than the column percentages, as the more interesting, and more intepretable, question would be to compare relative approval levels across different education categories.
-
+In this case, the row percentages would be likely much more helpful to us than the column percentages. The more interesting, and easier to interpret, question would be to compare relative approval levels across different education categories.
 
 To make a plot of these results, we would probably want to produce some bar charts. There are a few different ways of making bar charts we learnt about earlier in the course - either stacking or using facets. 
 
@@ -338,7 +362,7 @@ Pulse %>%
     chisq.test()
 ```
 
-And we obtain a p-value of 0.549, saying that we don't have enough evidence to conclude that there is a relationship between education level and approval of donald trump.
+And we obtain a p-value of 0.549, saying that we don't have enough evidence to conclude that there is a relationship between education level and approval of Donald Trump.
 
 However... we also see a warning message telling us that the chi-square approximation may be incorrect.
 
@@ -352,24 +376,27 @@ Pulse %>%
      adorn_percentages() %>%
         chisq.test()
 ```
-Do not do this! If you try to pipe from the formatted percentages, after `adorn_pct_formatting`, you do at least get an error message so there is no dangerous output to worry about.
+Do not do this!
+
 
 ### Assumptions
 
 There are two key assumptions for a chi-square test to be valid.
 
-The assumption that the warning message we saw in the output is related to sample size. We need to have a sufficient number of observations in all possible combinations of the categories of our two variables. The general rule of thumb is to have expected frequencies of at least five observations in all combinations. 
+The first is similar to the t-test, and the Wilcox test. We need independent observations.
+
+The warning message we saw in the output is related to a different assumption, about the sample size. We need to have a sufficient number of observations in all possible combinations of the categories of our two variables. The general rule of thumb is to have expected frequencies of at least five observations in all combinations. 
 
 Looking at our graphs and frequency tables it is clear that this issue is being flagged as a result of the "Other" education category. There are only has a of 9 observations within this category, so when split across the three approval levels this will certainly result in expected frequencies lower than 5.
 
 In this case, we have two options for how to deal with it:  
 1. Exclude the 'other' category and re-run the analysis  
-2. Use the non-parametric alternative
+2. Use the non-parametric alternative, the Fisher Exact Test
 
-In this instance we are probably not particularly interested in the 'other' category. We don't really know what it means - it may contain a mixture of some people with very high levels of education, or others with little or no education. Excluding it from the analysis probably makes some sense here.
+In this instance we are probably not particularly interested in the 'other' category. It may contain a mixture of some people with very high levels of education, or others with little or no education. And there are not very many people with this response, so excluding it from the analysis probably makes some sense here.
 
-*Try to see if you can filter the dataset to remove the "other" education responses and then pipe this into the tabyl function and conduct the chi square test. Note - you may find need to investigate the help menu for tabyl() as you will probably run into difficulties.*
-*Look into the help for tabyl to see if you can resolve this: https://www.rdocumentation.org/packages/janitor/versions/2.0.1/topics/tabyl*
+*Try to see if you can filter the dataset to remove the "other" education responses and then pipe this into the `tabyl()` function and conduct the chi square test. Note - you may find need to investigate the help menu for `tabyl()` as you will probably run into difficulties.*
+*https://www.rdocumentation.org/packages/janitor/versions/2.0.1/topics/tabyl*
 
 ```{r chi0,echo=FALSE}
 Pulse %>%
@@ -395,9 +422,8 @@ Pulse %>%
 
 ### Fisher Test
 
-However, in other instances it may not make so much sense to just exclude a category completely, so we may instead look at a non-parametric alternative - the Fisher Exact test. Luckily the code works in exactly the same way as we have already seen for the `fisher.test` function.
+However, in other instances it may not make so much sense to just exclude a category completely, so we may instead look at a non-parametric alternative - the Fisher Exact test, `fisher.test`. Luckily the code works in exactly the same way as we have already seen with the `chisq.test` function.
 
-If you watched Mike Marin's Chi-square video from the previous section, you will already know about the Fisher exact test, as he also covers it in the same video.
 
 ```{r fisher2,exercise=TRUE}
 Pulse %>%
@@ -407,8 +433,9 @@ Pulse %>%
 
 But you might still see an error! That is because the Fisher test is extremely computationally intensive. So rather trying and possibly overloading your computer memory, an error comes up. 
 
-If you are working on a fast computer you might choose to modify the `workspace` argument to over-ride this by increasing the amount of memory available to R. Please DO NOT try this in this online workbook, we don't want our server to go down! But feel free to experiment on your own local version of Rstudio!
-An alterative would be to instead use the `simulate.p.value` argument to take a less computationally intensive, simulation based approach to calculating a p-value.
+If you are working on a fast computer you might choose to modify the `workspace` argument to over-ride this by increasing the amount of memory available to R. But please DO NOT try this in this online workbook!
+
+An alternative would be to instead use the `simulate.p.value` argument to take a less computationally intensive, simulation based approach to calculating a p-value.
 
 ```{r fisher3,exercise=TRUE}
 Pulse %>%
@@ -420,15 +447,15 @@ And again, we conclude that there is insufficient evidence to conclude there is 
 
 ## More tests?
 
-These are the only hypothesis tests we will talk about explicitly in this course, but hopefully you will see that the syntax for producing these tests is not especially complicated. This is true for all commonly used statistical hypothesis tests. There is a reason why most of Mike Marin's videos are able to be under 5 minutes long!
+These are the only hypothesis tests we will talk about explicitly in this course, but hopefully you will see that the syntax for producing these tests is not especially complicated. This is true for all commonly used statistical hypothesis tests. 
 
 If you know the simple statistical test you would like to conduct, and your data is in the appropriate format for that test, and the assumptions for that test can be met, it is usually pretty simple to find and then write the R code to carry out the test. 
 
-But 'getting data in the appropriate format' and 'checking the assumptions for the test' are not so straightforward! It is incredibly easy to do terrible data analysis in R, by skipping straight to the end p-value and churn out meaningless p-values. It is a bit like driving a car - anyone can push the accelerator and make it go forward; but if you don't know how to change the gears or you completely ignore all of the road signs then you are probably going to crash.
+But 'getting data in the appropriate format', 'checking the assumptions for the test' and 'knowing whether the hypothesis test makes sense for your question' are not so straightforward! It is incredibly easy to do terrible data analysis in R, by skipping straight to the end p-value and churn out meaningless p-values. It is a bit like driving a car - anyone can push the accelerator and make it go forward; but if you don't know how to change the gears or you completely ignore all of the road signs then you are probably going to crash.
 
-This is, of course, not just true of R but of any analysis software. However with R there is even less of an excuse for doing this since all of the tools needed to prevent it are provided and freely available. This is why we have placed so much emphasis in this course on data manipulation (dplyr), exploratory graphics (ggplot2) and using a coherent and reproduceable workflow (RStudio). 
+This is, of course, not just true of R but of any analysis software. However with R there is even less of an excuse for doing this since all of the tools needed to prevent it are provided and freely available. This is why we have placed so much emphasis in this course on data manipulation (`dplyr`), exploratory graphics (`ggplot2`) and using a coherent and reproducible workflow (RStudio). 
 
-When doing a PhD, it is also extremely unlikely that a simple hypothesis test will be sufficient for your analysis. It is likely you will need to be doing some statistical modelling, to better explain the patterns and trends in your data. We will learn about this in the next module!
+When doing a PhD, it is also extremely unlikely that a simple hypothesis test will be sufficient for your analysis. It is likely you will need to be doing some statistical modeling, to better explain the patterns and trends in your data. We will learn about this in the next module!
 
 
 ## Appendix: Setup for session
@@ -436,7 +463,7 @@ When doing a PhD, it is also extremely unlikely that a simple hypothesis test wi
 
 Starting with this session, all of the exercises in this course are only going to be available offline in an RMD workbook. So if you have skipped ahead of Module 4 - you will need to go back now and make sure you have RStudio up and running on your own machine!
 
-A zip file containing the files used in this session is available [here]( https://github.com/stats4sd/r2020_05StatsTests/raw/main/Module5-StatsTests.zip)
+A zip file containing the files used in this session is available [here](https://github.com/stats4sd/r2020_05StatsTests/raw/main/Module5-StatsTests.zip)
 If you extract these into a folder, and set up an RStudio project based on that folder you will be able to follow along with the tutorial.
 
 The packages used in this session are `ggplot2`, `dplyr` and `janitor`. Make sure these are all installed and loaded before beginning the session. 
@@ -479,17 +506,14 @@ DT::datatable(Pulse)
 Video on interpreting p-values (Dr Nic's Maths and Stats):  
 https://www.youtube.com/watch?v=eyknGvncKLw  
 
-Video on t-tests in R (Marin Stats Lectures):  
-https://www.youtube.com/watch?v=RlhnNbPZC0A  
+Video on choosing an appropriate test (Dr Nic)
+https://www.youtube.com/watch?v=rulIUAN0U3w
 
-Video on chi-square tests in R (Marin Stats Lectures):  
-https://www.youtube.com/watch?v=POiHEJqmiC0  
 
 Tutorial on t-tests and non-parametric equivalents (UC Business Analytics R Programming Guide):  
 https://uc-r.github.io/t_test  
 
-Tutorial on chi-square tests (YaRrr - The Pirate's guide to R):  
-https://bookdown.org/ndphillips/YaRrr/chi-square-chsq-test.html  
-
+Tutorial covering all the tests covered in this session in more detail. (Note - Part I (Chi square tests) is much more complicated in this tutorial than the method we have shown! Suggest only working through Parts II and III)
+https://sbc.shef.ac.uk/workshops/2019-09-18-stats-r/
 
 
