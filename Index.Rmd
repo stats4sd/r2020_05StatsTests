@@ -511,6 +511,6 @@ Tutorial on t-tests and non-parametric equivalents (UC Business Analytics R Prog
 https://uc-r.github.io/t_test  
 
 Tutorial covering all the tests covered in this session in more detail. (Note - Part I (Chi square tests) is much more complicated in this tutorial than the method we have shown! Suggest only working through Parts II and III)
-https://sbc.shef.ac.uk/workshops/2019-09-18-stats-r/
+https://sbc.shef.ac.uk/workshops/2019-09-18-stats-r/practical.nb.html
 
 
