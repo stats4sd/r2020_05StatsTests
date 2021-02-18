@@ -1,0 +1,165 @@
+
+## Module 6: Exercises
+
+In these exercises we are going to look at conducting some statistical hypothesis tests in R, using a new dataset. We have looked enough at the `BeanSurvey` data for now! 
+
+We have explored a number of questions graphically, and with summary statistics, and now we can conduct hypothesis tests to tell us if we are able to conclude that there are statistically significant differences.
+
+If you have opened up this file without first unzipping all of the files into a single folder, and creating a Project file for this exercises, then please stop right now. Do those things!
+
+Now you are back you can install any of the libraries used in this session that you might not already have. You should already have `ggplot2` and `dplyr`; but you probably will now also need to install `janitor`.
+
+Once you have done that, you are now ready to go and running the chunk below should load the libraries and import the data to be used in these exercises.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(janitor)
+
+fallowsurvey<-read.csv("fallowsurvey.csv")
+
+```
+
+## Data
+
+This data is from a much larger survey of Kenyan farmers looking at whether they kept their fields fallow in any of the three previous years. The variables included are:
+*ID* - An ID for the farmer
+*Fallow_yr1* - Whether the farmer left their plot fallow in the the past season
+*Fallow_yrw* - Whether the farmer left their plot fallow two seasons previously
+*Fallow_yre* - Whether the farmer left their plot fallow three seasons previously
+*wealth* - An index of wealth based on what assets the farmer owns - larger scores equal more wealth
+*hheducation* - education level of the head of household
+*adults* - Number of adults in the household
+*ethnicity* - Ethnicity of the head of household
+*hhgender* - Gender of the head of household
+
+## Exercise 1
+
+Firstly we are going to consider whether there is a relationship between the farmer's wealth status and the ethnicity of the head of household.
+
+*Question 1.1: Produce summary statistics showing the mean and standard deviation of wealth for each of the two ethnicities, using `group_by` and `summarise`*
+
+```{r}
+fallowsurvey %>%
+  group_by(ethnicity) %>%
+    summarise(mean(wealth),sd(wealth))
+
+```
+
+*Question 1.2: Produce boxplots showing the distribution of wealth by ethnicity*
+
+```{r}
+ggplot(fallowsurvey,aes(y=wealth,x=ethnicity))+
+  geom_boxplot()
+```
+
+*Question 1.3: Carry out a t-test to investigate if there is a significant difference between wealth scores of the two ethnicities. Interpret the results*
+
+```{r}
+t.test(wealth~ethnicity,data=fallowsurvey)
+```
+
+## Exercise 2
+
+Now let us consider the relationship between ethnicity and whether the plot had been left fallow. 
+
+
+The recommendation for fallow plots is to leave the plot fallow in at least one out of 3 seasons. So we are not so interested to look at whether the plot was left fallow in the last season, or two seasons ago, but we are interested in if it has been left fallow at all. So we will need to create a new variable first!
+*Question 2.1: Use mutate to calculate a new variable called "Fallow_Last3" which takes the value "Yes" if the plot has been left fallow in any of the last three years and takes the value "No" if the plot was not left fallow in any of the last three years*
+
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) 
+```
+
+*Question 2.2: Piping from the last step, and using the variable you created in the last step, calculate the percentages of farmers within each ethnicity who left their plot fallow in at least one of the last seasons using the `tabyl` and `adorn_percentages` functions*
+
+
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    tabyl(ethnicity,Fallow_Last3) %>%
+      adorn_percentages()
+```
+
+*Question 2.3: Conduct a chi-square test to determine if there is a significant relationship between whether the farmer has left their plot fallow and the ethnicity of the head of household*
+
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    tabyl(ethnicity,Fallow_Last3) %>%
+      chisq.test()
+```
+
+## Exercise 3
+
+Now consider whether there is a relationship between education status of the head of household and whether the plot was left fallow, using the variable you calculated in question 2.1.
+Produce some summary statistics and then conduct an appropriate hypothesis test.
+You might notice a problem this time with conducting the chi-square test! Consider what would be an appropriate way of remedying this problem using one of the three options discussed in the workbook: `filter` to remove categories, `mutate` and `recode` to combine categories, or `fisher.test` to use a non-parametric test
+
+
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    tabyl(hheducation,Fallow_Last3) 
+
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    tabyl(hheducation,Fallow_Last3) %>%
+      adorn_percentages()
+
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    tabyl(hheducation,Fallow_Last3) %>%
+      chisq.test()
+
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+  filter(hheducation !="other") %>%
+    tabyl(hheducation,Fallow_Last3) %>%
+      chisq.test()
+```
+
+
+
+## Exercise 4
+
+Finally let's consider the relationship between wealth and the fallow status of the plot, again using the "Fallow_Last3" variable you created in exercise 2. Produce summary statistics and plots, and then choose an appropriate statistical test to investigate the relationship and interpret the results. Consider if what you have done makes sense.
+
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    group_by(Fallow_Last3)  %>%
+      summarise(mean(wealth),sd(wealth))
+
+```
+
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    ggplot(aes(y=wealth,x=Fallow_Last3))+
+      geom_boxplot()
+
+```
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    t.test(wealth~Fallow_Last3,data=.)
+```
+
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    mutate(wealth_cat=cut(wealth,breaks=c(-1,1.5,3,99))) %>%
+      tabyl(wealth_cat,Fallow_Last3) %>%
+        adorn_percentages()
+```
+
+```{r}
+fallowsurvey %>%
+  mutate(Fallow_Last3=ifelse(Fallow_yr1=="Yes"|Fallow_yr2=="Yes"|Fallow_yr3=="Yes","Yes","No")) %>%
+    mutate(wealth_cat=cut(wealth,breaks=c(-1,1.5,3,99))) %>%
+      tabyl(wealth_cat,Fallow_Last3) %>%
+        chisq.test()
+```
+

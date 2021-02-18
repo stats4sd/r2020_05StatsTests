@@ -4,7 +4,7 @@ output:
   learnr::tutorial:
     progressive: true
     allow_skip: true
-    df_print: default
+    df_print: paged
 runtime: shiny_prerendered
 description: >
   Hypothesis tests in R.
@@ -19,29 +19,28 @@ library(DT)
 library(car)
 tutorial_options(exercise.timelimit = 10)
 
+BeanSurvey<-read.csv("bean_survey.csv")[,-1]
 
-Pulse<-readRDS("Pulse.RDS")
-SurveyData<-readRDS("SurveyData.RDS")
+BeanSurvey$AGEHH<-c(32,57,20,55,78,42,28,49,41,54,65,63,32,29,43,68,53,39,25,44,23,47,32,26,25,29,44,23,58,69,26,65,75,51,38,24,35,29,37,45,50,23,60,32,70,43,51,28,65,33)
 
 
-selfesteem<-data.frame(ID=1:10,AttractivenessBefore=c(4,7,5,3,9,7,7,8,1,10),AttractivenessAfter=c(8,7,4,7,9,8,5,9,10,8))
+BeanSurvey<-mutate(BeanSurvey,GENDERHH=ifelse(is.na(GENDERHH),"male",as.character(GENDERHH)))
 
 ```
 
 
 ## Overview
 
-Doing the standard statistics hypothesis tests in R is pretty easy! In this workbook we are going to look at how you can do some very commonly used tests - t-test and chi-square test, as well as the non-parametric equivalents. We are going to assume that you have probably come across these methods before, but you also may want to follow some of the linked resources for a refresher.
+Doing the standard statistics hypothesis tests in R is pretty easy! In this workbook we are going to look at how you can do some very commonly used tests - t-test and chi-square test, as well as the non-parametric equivalents which you can use in cases when the assumptions are not met. We are going to assume that you have probably come across these methods before, but you also may want to follow some of the linked resources for a refresher.
 
-In general these simple tests can be a useful starting point, but are very limited in what they can tell you. We will talk more about statistical modeling in R on the final module, which is an approach which can be extended and built upon in lots of much more interesting and useful ways than these simple tests.
+In general these simple tests can be a useful starting point, but are limited in what they can tell you. So in the next module of the course we will talk more about statistical modeling, which let's you extend upon the principles from these statistical tests and build on them to be applicable in more scenarios and can be applied in much more interesting ways than just these simple tests.
 
-We are going to use the same `Pulse` dataset we looked at earlier in the course when working with ggplot2. The data is embedded at the end of this workbook if you want a refresher on what this data contains, and how the variables are named.
-
+We are going to use the same `BeanSurvey` dataset we looked at earlier in the course to make graphs & data manipulations and we will now extend this into some statistical tests. The data is embedded at the end of this workbook if you want a refresher on what this data contains, and how the variables are named.
 
 
 There are lots of resources walking through the basic mechanics of the t-test in R. There is a nice guide [here](https://uc-r.github.io/t_test#twosample)
 
-As you will see, the functions themselves are pretty straightforward. And, you may be pleased to hear, there are not many new functions to learn about in this module!
+As you will see, the functions themselves are pretty straightforward. And, you may be pleased to hear, there are not very many new functions to learn about in this module, especially compared to the previous modules!
 
 However, it is extremely important to use these functions in the correct context and know what to do when results are unexpected. One of the best things about R is the ability to create a reproducible workflow using markdown files to store commands, and explanations. And in the videos for this module we talk through one such example - trying to emphasise the process of thinking about what you are doing, and what it means, and how it can be improved. 
 We will learn more about extending this approach from hypothesis tests into more complete statistical models in the next module of this course.
@@ -54,45 +53,50 @@ The second part of the video will come later in the workbook!
 
 We can use a two sample t-test when we want to compare the means of a numeric variable across two groups, to determine if the difference is statistically significant.
 
-So, if we think back to our `Pulse` dataset - we could compare perceived attractiveness of the respondents, `Attractiveness`,  by gender, `Gender`. We should always start by exploring our data first!
+So, if we think back to our `BeanSurvey` dataset - we could compare whether the average amount of land owned by male headed households is different to the average amount of land held by female headed households. We should always start by exploring our data first! 
 
 ### Preliminary Analysis
 
 Before any formal hypothesis test, always look at summary statistics and plots showing the relationship you are interested in.
 
-And this is the perfect chance to apply and recap all your newly acquired ggplot2 and dplyr skills! 
+And this is the perfect chance to apply and recap all your newly acquired ggplot2! 
 
-*Write the code below which will match the embedded output, to show the means and standard deviations of `Attractiveness` by `Gender`; and then in the second chunk produce some histograms of the distribution of `Attractiveness` with separate panels for each `Gender.*
+*Continue from the code below to match embedded output, to show the means and standard deviations of `LANDAREA` by `GENDERHH`, and the number of observations in each group*
 
 **Summary Statistics of Attractiveness by Gender**
-```{r summarystats, exercise=TRUE}
+```{r summarystats, exercise=TRUE,error=TRUE}
 
 ```
 
 
 ```{r,echo=FALSE,message=FALSE}
-Pulse %>%
-  group_by(Gender) %>%
-    summarise(mean=mean(Attractiveness),sd=sd(Attractiveness))
+BeanSurvey %>% 
+   group_by(GENDERHH) %>%
+    summarise(n=n(),mean=mean(LANDAREA,na.rm=T),sd=sd(LANDAREA,na.rm=T))
 ```
 
 
 
 ```{r summarystats-solution}
-Pulse %>%
-  group_by(Gender) %>%
-    summarise(mean=mean(Attractiveness),sd=sd(Attractiveness))
+BeanSurvey %>% 
+   group_by(GENDERHH) %>%
+    summarise(n=n(),mean=mean(LANDAREA,na.rm=T),sd=sd(LANDAREA,na.rm=T))
 ```
 
-
-**Histograms of Attractiveness by Gender**
+*Now match embedded output, this time to show histograms of `LANDAREA` split by `GENDERHH`, and then some boxplots*
+**Histograms of Long Rains Yield by VILLAGE**
 
 
 
 ```{r,echo=FALSE,message=FALSE}
-ggplot(data=Pulse,aes(x=Attractiveness))+
+BeanSurvey %>% 
+  ggplot(aes(x=LANDAREA))+
     geom_histogram()+
-      facet_wrap(~Gender)
+      facet_wrap(~GENDERHH)
+
+BeanSurvey %>% 
+  ggplot(aes(y=LANDAREA,x=GENDERHH))+
+    geom_boxplot()
 ```
 
 ```{r summaryplot, exercise=TRUE}
@@ -100,45 +104,54 @@ ggplot(data=Pulse,aes(x=Attractiveness))+
 ```
 
 ```{r summaryplot-solution}
-ggplot(data=Pulse,aes(x=Attractiveness))+
+BeanSurvey %>% 
+  mutate(YIELD_LR =BEANSHARVESTED_LR/LANDAREA ) %>%
+  ggplot(aes(x=YIELD_LR))+
     geom_histogram()+
-      facet_wrap(~Gender)
+      facet_wrap(~VILLAGE)
+
+BeanSurvey %>% 
+  ggplot(aes(y=LANDAREA,x=GENDERHH))+
+    geom_boxplot()
 ```
 
-Looking at the summary stats and the plots we can already see that there doesn't look like there is much difference at all between the attractiveness ratings of males and females in the survey! Both the means and the distributions are virtually identical.
+Looking at the summary stats we can see that the average values are a little higher for male headed households on average as compared to female headed households.
 
-So it would be quite surprising if, when we come to run a t-test, that we found we had a significant difference here.
+We can see from the boxplots and histograms that generally the distributions of landarea are shifted a little higher for the male headed households, which we can see from the higher shift in the median and quartiles making up the boxes. However, we also see that the distribution is skewed by some large values - most farmers have under 3 acres of land, but there are are a small number with much larger yields. 
 
+
+The plots and summary statistics suggests it looks like a reasonable hypothesis to suggest that male headed households have, on average, more land than female headed households. We can conduct a formal statistical significance test to see if there is sufficient evidence to confirm that hypothesis, or whether the differences which are observing in the data are no larger than we would expect to see by random chance.
 
 ### Running the t-test
 
-The structure of the `t.test` function is that we provide the name of our numeric variable (`Attractiveness`), followed by a tilde (`~`), followed by the name of our 2 level grouping variable (`Gender`). 
+We can use a t-test when we have a continuous numeric variable and we either want to compare whether the average value is significantly different from a fixed reference value (a one sample t-test) or whether the average value is significantly different between two groups (a two sample t-test). In this case we have appropriate data to use - a numeric variable `LANDAREA` and a two-level categorical variable `GENDERHH`.
+
+The structure of the `t.test` function is that we provide the name of our numeric variable (`LANDAREA`), followed by a tilde (`~`), followed by the name of our 2 level grouping variable (`GENDERHH`). Then we need the name of our data. 
 
 ```{r ttest1, exercise=TRUE}
-t.test(Attractiveness~Gender,data=Pulse)
+t.test(LANDAREA~GENDERHH,data=BeanSurvey)
 ```
 
-In this case we would conclude, from the p-value of 0.9795 that there is no evidence of any difference in the mean values of perceived attractiveness between our male and female respondents.
+In this case we would conclude, from the p-value of 0.296 that there is no evidence to be able to conclude that there is a significant difference in the mean values of land area based on gender of head of household.
 
 The output also shows us the t-statistic, degrees of freedom and a 95% confidence interval around the difference in the means.
 
 It's worth reminding yourself of how p-values work - they are very commonly misunderstood and therefore misinterpreted. There is a great video from Dr Nic about p-values [here](https://www.youtube.com/watch?v=eyknGvncKLw)
 
-And that's it! We have done our t-test in R.
 
-With the `t.test` function it is important to note that, unlike functions from `ggplot2` and `dplyr`, the name of the data comes as the second argument *after* the formula. 
+With the `t.test` function it is important to note that, unlike most of the functions we have used so far in this course the name of the data comes as the second argument *after* the formula. 
 
 We can use a pipe (`%>%`) to get from the data to the t-test, but we need to use it in a slightly different way. The pipe assumes the first argument of a function is the data, but we can override this. Within `t.test`, or any function where data is not the first argument, after the pipe we can include an argument `data= .`. The `.` denotes to inherit the data coming in from the previous line.
-Like this:
+
 
 ```{r pipein, exercise=TRUE}
-Pulse %>%
-  t.test(Attractiveness~Gender,data=.)
+BeanSurvey %>% 
+     t.test(YIELD_LR~VILLAGE,data=.)
 
 ```
+And that's it! We shown you how to do a t-test in R...
 
-
-And there are also other more practical things to consider when running a t-test; whether the hypothesis and the assumptions underlying it are sensible. And we should know what to do if we do encounter anything that makes us question the validity of the methods.
+... but! There are also other more practical things to consider when running a t-test; whether the hypothesis and the assumptions underlying it are sensible. And we should know what to do if we do encounter anything that makes us question the validity of the methods.
 
 There is actually one assumption you were probably taught about when learning the t test that you do not need to worry about at all when using the `t.test` function in R.
 
@@ -150,46 +163,18 @@ You probably learnt that you need to have approximately "equal variance" within 
 
 There is no real reason not to use this modification. If the variances are exactly equal then both the classic and Welch t-tests will provide identical results; and when the variances are very similar the differences between the results are trivial.
 
-But if the variances are not similar the classic t-test results would not be valid where the Welch t-test results would be. 
+But if the variances are not similar the classic t-test results would not be valid where the Welch t-test results would be. Looking at the summary statistics and plots we produced earlier it does appear that the variances may not be equal - the standard deviation is quite a bit larger for male headed households compared to female headed households. So in this case we would almost certainly want to keep with the default from R and use the Welch version of the t-test.
 
-But, if you really love the classic t-test, or just want to check to match the results from other software which have different defaults then you can add the argument `var.equal = TRUE` into the code)
+But, if you really love the classic t-test, or just want to confident that the results match those you might have seen running the same code from other software  then you can add the argument `var.equal = TRUE` into the code
 
 ```{r ttest, exercise=TRUE}
-t.test(Attractiveness~Gender,data=Pulse,var.equal=TRUE)
+t.test(LANDAREA~GENDERHH,data=BeanSurvey,var.equal=TRUE)
+
 ```
 
-As you can see, if you go back and compare the results to the previous output, the value of the t-statistic, and degrees of freedom change very slightly, but the p-value is the same to 4 decimal places. The variance of the two groups is almost identical, as we saw from the summary statistics, so the two alternatives provide almost exactly the same output.
+As you can see, if you go back and compare the results to the previous output, the value of the t-statistic, and degrees of freedom change very slightly, and so does the p-value. In this case though, it would have made no substantial difference to our conclusions, despite the fairly large change in the p-value. In other cases it might be the difference between a significant and a non-significant result, so we should think carefully before assuming that the equal variance assumption is valid.
 
-
-### Assumption 1: Independence
-
-Probably the most important assumption to consider is whether or not the observations are independent of each other in the two groups. The simplest example of this is when we have paired data.
-
-There isn't a good example to demonstrate this within the `Pulse` dataset - so let's quickly consider a different scenario but with a similar variable.
-
-Let's say where 10 people are asked to rate their attractiveness prior to attending a self esteem seminar. After completing the seminar, they are then asked to assess their own attractiveness again. I have imported the results from this made up experiment into R as a data frame called `selfesteem`
-
-```{r,echo=FALSE}
-datatable(selfesteem)
-```
-
-We would like to know if the seminar has had any impact, so we can test the hypothesis that the average score has changed between the pre and post assessments. In this case we have paired samples - from the 10 participants. So results from the two groups are definitely not independent; making a 'classic' t-test inappropriate. 
-
-But there is a paired t-test we can use, also using the same `t.test` function, but with a slightly different way of specifying the inputs.
-
-
-```{r pairedT,exercise=TRUE}
-t.test(selfesteem$AttractivenessBefore, selfesteem$AttractivenessAfter, paired=TRUE)
-```
-
-The paired t-test works in this specific scenario, but there are more complicated violations of independence, which can't be so easily fixed. 
-
-Particularly when we consider having more than two matched observations (e.g. data taken over multiple time points); experimental designs with blocking; or clustered sampling in surveys. 
-
-In this case the t-test is not at all a sufficient method for analysis! So, you will have to start learning more about statistical modeling to do a good job of analysing your data - and matching the appropriate model structure to your data structure.
-
-
-### Assumption 2: Normality
+### Assumption 1: Normality
 
 We also have another assumption that we have approximate normality of the response with each group. The key word here though is 'approximate';  a lot of people can get very hung up on whether they have a perfectly normal distributions. In fact, as we increase the size of our data, the t-test will still be valid with increasingly non-normal looking distributions. This is known as the 'central limit theorem'.
 
@@ -203,54 +188,13 @@ There is no assumption requiring 'exact' normality. And using the tests of norma
 
 So simply visually inspecting the distributions from a histogram, is usually sufficient for us when we consider if our data can meet this assumption.
 
-With the attractiveness variable, we saw from the histograms that, although definitely not exactly normal, it is probably close enough for our purposes. Fairly unskewed, no outliers, unimodal and roughly symmetrical.
-
-```{r hist1, exercise=TRUE}
-ggplot(data=Pulse,aes(x=Attractiveness))+
-    geom_histogram()+
-      facet_wrap(~Gender)
-```
-
-However, with very non-normal distributions you do also have issues to consider about whether the hypothesis of the t-test makes sense. The mean value may not be a sensible parameter to be comparing when thinking about heavily skewed distributions, or non-unimodal distributions. So it is worth being aware of alternatives.
+In this particular case we probably do not have enough data to be able to invoke the central limit theorem. And the histograms we produced earlier suggested a very substantial skew in the data. So we should consider possible alternatives. 
 
 ### Non-Parametric Alternative: Wilcoxon Test
 
-Annual income is a variable which will nearly always be heavily skewed in data covering a wide population. Let's think about comparing `Income` by `Gender` from our Pulse dataset.
+A common solution to this problem would be to use a non-parametric test, like the Wilcoxon rank sum test, also known as the Mann-Whitney U test.
 
-```{r hist2, exercise=TRUE}
-ggplot(data=Pulse,aes(x=Income))+
-    geom_histogram()+
-      facet_wrap(~Gender)
-```
-
-Although it is unimodal, there is a huge skew in the distributions. A result of a small number of people reporting very large incomes. 
-
-In this case, we do have a severe violation of normality. We may not feel confident invoking the central limit theorem, or thinking about whether the 'mean' income is a sensible parameter to compare. 
-
-*Write some code below to calculate the mean and median incomes by gender.*
-
-```{r medmean, exercise=TRUE}
-
-```
-
-
-```{r medmean-solution}
-Pulse %>%
-  group_by(Gender) %>%
-    summarise(mean=mean(Income),median=median(Income))
-```
-
-You should see that the difference between the median income of males and females (10,000 USD) is less than half of the difference between the mean income between males and females (21,475 USD). A small number of the male respondents earn a lot of money, which is dragging up the mean value within that group substantially. So doing any test which compares means may over-state the real practical implications of the difference in incomes.
-
-R will not stop us from running a t-test here, and there will be no errors or warnings.
-
-```{r tincome, exercise=TRUE}
-t.test(Income~Gender,data=Pulse)
-```
-
-We do obtain a result suggesting that the difference in income is statistically significant, p=0.003. 
-
-But we may be more interested in whether the distribution of incomes is shifted for males as compared to females, rather than whether the mean value is different. So we could consider a non-parametric alternative, the Wilcoxon Rank-Sum Test (also known sometimes as the Mann-Whitney U test). 
+Instead of testing whether the mean values differ between the groups, instead this considers whether the distribution of incomes is shifted for males as compared to females, rather than whether the mean value is different. 
 
 This works by ranking the values in each group and comparing the average ranks in the two groups. This makes it robust to all sorts of strange looking distributions, because the maximum value can never be more than one unit higher than the next highest value. 
 
@@ -259,15 +203,99 @@ However, it does have less statistical power to detect differences between group
 Luckily, within R, the code for `wilcox.test` function is almost identical to what we have seen already with `t.test`. So switching to a non-parametric test is simple! We just change `t.` to `wilcox.`.
 
 ```{r wilcox1,exercise=TRUE}
-wilcox.test(Income~Gender,data=Pulse)
+  wilcox.test(LANDAREA~GENDERHH,data=BeanSurvey)
 ```
 
-And here we do get very strong evidence, p=0.0008 against the null hypothesis that distribution of incomes for males is the same as incomes for females. So this provides further reinforcement of our initial conclusion from the t-test.  
+And here we obtain a similar result with a p-value of p=0.3469 suggesting we have no evidence against the null hypothesis that distribution of land area for males is the same as incomes for females. So this provides further reinforcement of our initial conclusion from the t-test.  
 
 Note in the output that the hypothesis is described in the output as "location shift" - this is another way of considering the 'mean of the ranks'. Another way of framing it for this specific test would be that our significant result suggests that males are more likely to have incomes which are higher than the median income. 
 Because of the existence of ties, the Wilcoxon test does not directly compare the median values. In the video, you will have seen an example where the medians of the two groups are the same but the Wilcoxon test provides a significant result.
 
+You can see a better idea of how the Wilcoxon test works by using the `rank()` function to rank the values and then calculate the mean of the ranks and then pipe into a plot or summary statistics.
+
+```{r rank2,exercise=TRUE}
+BeanSurvey %>%
+  select(LANDAREA,GENDERHH) %>%
+  mutate(land_rank=rank(LANDAREA))
+```
+
+```{r rank5,exercise=TRUE}
+BeanSurvey %>%
+  select(LANDAREA,GENDERHH) %>%
+  mutate(land_rank=rank(LANDAREA)) %>%
+    ggplot(aes(y=land_rank,x=GENDERHH))+
+      geom_boxplot()
+```
+
+
+```{r rank3,exercise=TRUE}
+BeanSurvey %>%
+  select(LANDAREA,GENDERHH) %>%
+  mutate(land_rank=rank(LANDAREA)) %>%
+    group_by(GENDERHH) %>%
+      summarise(mean(land_rank))
+```
+
+The smallest value is ranked as 1, the second smallest value ranked as 2 and so on. When we compare the distribution of ranks we can see the ranks are a little higher (i.e. larger area) for the male headed households, but the difference is not large enough to conclude that this difference is larger than what we would see by chance.
+
 If you haven't come across it before, you can read more about the Wilcoxon rank sum test [here](https://www.stat.auckland.ac.nz/~wild/ChanceEnc/Ch10.wilcoxon.pdf). 
+
+### Assumption 2: Independence
+
+Probably the most important assumption to consider is whether or not the observations are independent of each other in the two groups. The simplest example where this is not the case when we have paired data.
+
+
+A good example of this would be if we were to compare beans planted in the short rains against beans planted in the long rains.
+
+```{r pair1,exercise=TRUE ,echo=FALSE}
+ggplot(data=BeanSurvey)+
+  geom_boxplot(aes(y=BEANSPLANTED_LR,x=1))+
+  geom_boxplot(aes(y=BEANSPLANTED_SR,x=2))+
+  scale_x_continuous(breaks=1:2,labels=c("LR","SR"))
+```
+. We also had to use some different code to what we have seen previously. Because we have multiple variables for the groups, rather than one variable for the outcome and one variable for the grouping factor. So to make this plot I have set the aesthetics within the `geom_()` functions rather than in the `ggplot()` function. We can do this if we want to use different variables for different geometries. In both my calls to `geom_boxplot()` I am setting a constant fixed value for the x axis and then making sure I label this with the   
+
+Although our boxplots look similar to what we have seen before when comparing male to female headed households there is a key difference here - the same farmers have observations in both the long rains and the short rains.
+
+So while we can calculate mean and standard deviation values like before, we do not need to use `group_by` since the variables are different for each group. 
+
+```{r summ_groups, exercise=TRUE}
+BeanSurvey %>%
+  summarise(mean(BEANSPLANTED_LR,na.rm=T),sd(BEANSPLANTED_LR,na.rm=T),
+            mean(BEANSPLANTED_SR,na.rm=T),sd(BEANSPLANTED_SR,na.rm=T))
+```
+With the paired t-test we also using the same `t.test` function, but with a slightly different way of specifying the inputs. It is also not possible to pipe into the paired t-test since none of the arguments are the `data` - we need the two variable names.
+
+
+```{r paired, exercise=TRUE}
+t.test(BeanSurvey$BEANSPLANTED_LR,BeanSurvey$BEANSPLANTED_SR,paired=TRUE)
+```
+In this case we see that, although we do so more beans planted on average in the long rains, by 1.3kg, we do not have enough evidence at the 5% significance level to conclude that this difference is statistically significant (p=0.0978).
+
+Again, we may be concerned about the normality assumption. With the paired t-test what we care about is not the distribution of he individual variables but the distribution of the differences within each farmer. So we can use `mutate` to calculate the column of differences and then look at a histogram.
+
+```{r pairhist, exercise=TRUE}
+BeanSurvey %>%
+  mutate(PLANTED_DIFF=BEANSPLANTED_LR-BEANSPLANTED_SR) %>%
+    ggplot(aes(x=PLANTED_DIFF))+
+      geom_histogram()
+```
+
+We may be concerned that results are being skewed by the two very high values, so perhaps we could also try the Wilcoxan test again. Luckily this works exactly like before. The `paired` code for `wilcox.test` is the same as the `paired` code for `t.test`, all we need to do is change the function.
+
+
+```{r pairwilcox, exercise=TRUE}
+wilcox.test(BeanSurvey$BEANSPLANTED_LR,BeanSurvey$BEANSPLANTED_SR,paired=TRUE)
+```
+Again, we obtain a similar conclusion, we do not have enough evidence to be confident that the difference between the seasons in the data is due to more than just chance.
+
+The paired t-test works in this specific scenario, but there are more complicated violations of independence, which can't be so easily fixed. 
+
+Particularly when we consider having more than two matched observations (e.g. data taken over multiple time points); experimental designs with blocking; or clustered sampling in surveys. 
+
+In this case the t-test is not at all a sufficient method for analysis! So, you will have to start learning more about statistical modeling to do a good job of analysing your data - and matching the appropriate model structure to your data structure.
+
+
 
 ## Chi-square test
 
@@ -279,7 +307,7 @@ In this workbook I am going to demonstrate using the `janitor` library for this 
 
 As this is quite a new package, when you look online there are not many resources which take this particular approach, and you will instead see other functions, like `table` or `prop.table` being used. There is always more than one way to do something in R. For me the `janitor` approach is actually much more straightforward to follow than the traditional approach.
 
-So, as an example, we may be interested in the relationship between education level, `Education`, and support for Donald Trump, `ApproveTrump`.
+So, as an example, we may be interested in the relationship between whether a household sells beans, `SELLBEANS`, and the village `VILLAGE`.
 
 ### Preliminary analysis
 
@@ -287,54 +315,54 @@ The preliminary analysis that we would first look at here would be a cross-tab c
 
 ```{r tabyl1,exercise=TRUE}
 
-Pulse %>%
-  tabyl(Education,ApproveTrump)
+BeanSurvey %>%
+  tabyl(VILLAGE,SELLBEANS) 
 
 ```
 
 The first variable will always be placed in the rows of the table, and the second variable will be placed in the columns.
 
-Try to intepret those numbers from the frequency table output, and see if you think there is a pattern. It is hard! With cross-tabs it can be pretty difficult to work out if there is a pattern from just the numbers themselves. 
+Try to interpret those numbers from the frequency table output, and see if you think there is a pattern. It is hard! With cross-tabs it can be pretty difficult to work out if there is a pattern from just the numbers themselves. 
 
 So we often will also look at marginal percentages. That: is for each level of one variable what percentage of respondents fall in the levels of the second variable. 
 
 We refer to these as "row percentages" or "column percentages", depending on whether we are looking at the percentages within each row or percentages within each column. We can pipe the frequency table into the function `adorn_percentages` to investigate this.
 
-I.e. We can either ask for "What percentage of people with "High School or Less" education approve of Donald Trump?" This is the 'row percentage' because we are looking within education levels, and education is the row factor. The row percentage is the default option, so we don't need to add anything else to this function.
+I.e. We have two possible questions:  "What percentage of people in Kimbugu sell beans?" This is the 'row percentage' because we are looking within education levels, and education is the row factor. The row percentage is the default option, so we don't need to add anything else to this function.
 
 ```{r tabyl2,exercise=TRUE}
-Pulse %>%
-  tabyl(Education,ApproveTrump) %>%
+
+BeanSurvey %>%
+  tabyl(VILLAGE,SELLBEANS) %>%
     adorn_percentages()
 ```
-
 By default this shows us proportions rather than nicely formatted percentages. But we can pipe into an extra function, `adorn_pct_formatting` to apply the percentage formatting.
 
 ```{r tabyl3,exercise=TRUE}
-Pulse %>%
-  tabyl(Education,ApproveTrump) %>%
+BeanSurvey %>%
+  tabyl(VILLAGE,SELLBEANS) %>%
     adorn_percentages() %>%
       adorn_pct_formatting()
 ```
 
-So we can see that, for example, exactly 50% of people with "High school or less" education approve of Donald Trump, and only 42% of people with a "College degree" approve of Donald Trump.
+So we can see that, 54% of people in Kimbugu sell beans, and only 15% of people in Lwala sell beans.
 
-Or we could ask for "What percentage of people who approve of Donald Trump have "High School or Less" education?". We need to add the argument "col" into the `adorn_percentages` function to obtain this.
+Or we could ask for "What percentage of people who sell beans live in Kimbugu". We need to add the argument "col" into the `adorn_percentages` function to obtain this.
 
 ```{r tabyl4,exercise=TRUE}
-Pulse %>%
-  tabyl(Education,ApproveTrump) %>%
+BeanSurvey %>%
+  tabyl(VILLAGE,SELLBEANS) %>%
     adorn_percentages("col") %>%
       adorn_pct_formatting()
 ```
 
-So here we can see that 25% of those who support Donald Trump, have "High school or less education" and 29% of those who support Donald Trump have a "College degree" education.
+So here we can see that 77% of those who sell beans live in Kimbugu.
 
-Just consider those numbers for a second. High school only educated people are *more likely* to support Donald Trump than college educated people (50% vs 42%); but Donald Trump approvers are *more likely* to have a college education than they are to be only high school educated (29% vs 25%). This is not a contradiction! 
+This is not a contradiction! 
 
 We always have to think carefully about which percentages are being calculating, and thinking about which would make the most sense to interpret. 
 
-In this case, the row percentages would be likely much more helpful to us than the column percentages. The more interesting question, and probably easier to interpret, would be to compare relative approval levels across different education categories.
+In this case, the row percentages would be likely much more helpful to us than the column percentages. The more interesting question, and probably easier to interpret, would be to compare relative levels of bean selling across the different villages
 
 To make a plot of these results, we would probably want to produce some bar charts. There are a few different ways of making bar charts we learnt about earlier in the course - either stacking or using facets. 
 
@@ -346,15 +374,15 @@ To make a plot of these results, we would probably want to produce some bar char
 
 
 ```{r ggbar0,echo=FALSE}
-ggplot(data=Pulse,aes(y=ApproveTrump,fill=ApproveTrump))+
-  geom_bar(show.legend=FALSE)+
-  facet_wrap(~Education)
+ggplot(data=BeanSurvey,aes(group=SELLBEANS,fill=SELLBEANS,y=VILLAGE))+
+  geom_bar(position="fill")+
+   scale_x_continuous(breaks=c(0,0.2,0.4,0.6,0.8,1),labels=c("0%","20%","40%","60%","80%","100%"))
 ```
 
 ```{r ggbar1-solution}
-ggplot(data=Pulse,aes(y=ApproveTrump,fill=ApproveTrump))+
-  geom_bar(show.legend=FALSE)+
-  facet_wrap(~Education)
+ggplot(data=BeanSurvey,aes(group=SELLBEANS,fill=SELLBEANS,y=VILLAGE))+
+  geom_bar(position="fill")+
+   scale_x_continuous(breaks=c(0,0.2,0.4,0.6,0.8,1),labels=c("0%","20%","40%","60%","80%","100%"))
 ```
 
 ### Running the test
@@ -362,22 +390,21 @@ ggplot(data=Pulse,aes(y=ApproveTrump,fill=ApproveTrump))+
 To run the chi square test, we need to have the two-way frequency table exactly as it comes from running the `tabyl()` line of code. This then pipes directly into the `chisq.test` function.
 
 ```{r chi1,exercise=TRUE}
-Pulse %>%
-  tabyl(Education,ApproveTrump) %>%
+BeanSurvey %>%
+  tabyl(VILLAGE,SELLBEANS) %>%
     chisq.test()
 ```
 
-And we obtain a p-value of 0.549, saying that we don't have enough evidence to conclude that there is a relationship between education level and approval of Donald Trump.
+And we obtain a p-value of 0.0095, saying that here we have enough evidence to conclude that farmres in Kimbugu are more likely to sell their beans compared to farmers in Lwala.
 
-However... we also see a warning message telling us that the chi-square approximation may be incorrect.
 
-Before we deal with that, and talk more about the assumptions about the chi-square test, first a different warning. Make sure you pipe from the frequency table, created by `tabyl`, into `chisq.test` and not from the table of proportions or formatted percentages, created by either `adorn_percentages` or `adorn_pct_formatting`. 
+Make sure you pipe from the frequency table, created by `tabyl`, into `chisq.test` and not from the table of proportions or formatted percentages, created by either `adorn_percentages` or `adorn_pct_formatting`. 
 
 Piping from the table of proportions *does not give an error* but the results it returns *are nonsense*.
 
 ```{r chi1_fail,exercise=TRUE}
-Pulse %>%
-  tabyl(Education,ApproveTrump) %>%
+BeanSurvey %>%
+  tabyl(VILLAGE,SELLBEANS) %>%
      adorn_percentages() %>%
         chisq.test()
 ```
@@ -390,65 +417,97 @@ There are two key assumptions for a chi-square test to be valid.
 
 The first is similar to the t-test, and the Wilcox test. We need independent observations. If we don't meet this assumption, we will have to learn more about statistical modelling, rather than use a chi-square test.
 
-The warning message we saw in the output is related to a different assumption, about the sample size. We need to have a sufficient number of observations in all possible combinations of the categories of our two variables. The general rule of thumb is to have expected frequencies of at least five observations in all combinations. 
 
-Looking at our graphs and frequency tables it is clear that this issue is being flagged as a result of the "Other" education category. There are only 9 observations within this category, so when split across the three approval levels this will certainly result in expected frequencies lower than 5.
+There is another assumption we have to meet though related to the sample size within each category.
+Let's try a different question - whether `HHTYPE` is related to the selling of beans. See if you can match the output below:
 
-In this case, we have two options for how to deal with it:  
-1. Exclude the 'other' category and re-run the analysis  
-2. Use the non-parametric alternative, the Fisher Exact Test
 
-In this instance we are probably not particularly interested in the 'other' category. It may contain a mixture of some people with very high levels of education, or others with little or no education. And there are not very many people with this response, so excluding it from the analysis probably makes some sense here.
+```{r chi_q1_show,echo=FALSE}
+BeanSurvey %>%
+  tabyl(HHTYPE,SELLBEANS) 
 
-*Try to see if you can filter the dataset to remove the "other" education responses and then pipe this into the `tabyl()` function and conduct the chi square test. Note - you may need to investigate the help menu for `tabyl()` as you will probably run into difficulties.*
-*https://www.rdocumentation.org/packages/janitor/versions/2.0.1/topics/tabyl*
+BeanSurvey %>%
+  tabyl(HHTYPE,SELLBEANS) %>%
+     adorn_percentages()
 
-```{r chi0,echo=FALSE}
-Pulse %>%
-  filter(Education!="Other") %>%
-  tabyl(Education,ApproveTrump,show_missing_levels = FALSE) %>%
+BeanSurvey %>%
+  tabyl(HHTYPE,SELLBEANS) %>%
     chisq.test()
 ```
 
-```{r chi2,exercise=TRUE}
+```{r chi_q1,exercise=TRUE}
 
 ```
 
-```{r chi2-solution}
-#Because 'Other' is still a level of education when using tabyl() it shows the Other row still there, but with zeroes in every cell
-#We have made things considerably worse instead of better if we then run the chisq.test function as the p-value comes out as NA. Oh no!
-#That is why we need to use the show_missing_levels=FALSE argument in the tabyl function.
+```{r chi_q1-solution}
+BeanSurvey %>%
+  tabyl(HHTYPE,SELLBEANS) 
 
-Pulse %>%
-  filter(Education!="Other") %>%
-  tabyl(Education,ApproveTrump,show_missing_levels = FALSE) %>%
+BeanSurvey %>%
+  tabyl(HHTYPE,SELLBEANS) %>%
+     adorn_percentages()
+
+BeanSurvey %>%
+  tabyl(HHTYPE,SELLBEANS) %>%
+    chisq.test()
+```
+We need to have a sufficient number of observations in all possible combinations of the categories of our two variables - in this example we see a warning message that the "chi-square approximation may be incorrect". The general rule of thumb is to have expected frequencies of at least five observations in all combinations - we can clearly see many of the household types have fewer observations than that overall, before we even consider whether they sold beans or not. 
+
+In this case, we have three options for how to deal with it:  
+1. Use a different variable - like gender of household head. In this case we have it already in our data, but if we did not we could create this using `mutate` and then the `recode` function which is very useful to know about.
+
+```{r chi_q2,exercise=TRUE}
+tabyl1<-BeanSurvey %>%
+  mutate(HHTYPE2 = dplyr::recode(HHTYPE,
+                          "Female headed absentee husband"="Female headed",
+                          "Female headed, no husband"="Female headed",
+                          "Male headed more than one wife"="Male headed",
+                          "Male headed one wife"="Male headed",
+                          "Single man"="Male headed",
+                          "Other"="Male headed")) %>%
+  tabyl(HHTYPE2,SELLBEANS)
+
+tabyl1
+
+tabyl1 %>%
+  adorn_percentages()
+
+tabyl1 %>%
     chisq.test()
 ```
 
-### Fisher Test
+2. Only include the two common `HHTYPES` which are "Female headed, no husband", and "Male headed one wife". We could restrict this using `filter`
 
-However, in other instances it may not make so much sense to just exclude a category completely, so we may instead look at a non-parametric alternative - the Fisher Exact test, `fisher.test`. Luckily the code works in exactly the same way as we have already seen with the `chisq.test` function.
+```{r chi_q3,exercise=TRUE}
+tabyl2 <- BeanSurvey %>%
+  filter(HHTYPE%in%c("Female headed, no husband","Male headed one wife")) %>%
+  tabyl(HHTYPE,SELLBEANS)
+
+tabyl2
+
+tabyl2 %>%
+  adorn_percentages()
+
+tabyl2 %>%
+    chisq.test()
+```
+In this case we still do get the same warning - because the frequencies in the "female headed, no husband" category are still a little small.
 
 
-```{r fisher2,exercise=TRUE}
-Pulse %>%
-  tabyl(Education,ApproveTrump) %>%
+3. Use the non-parametric alternative, the Fisher Exact Test
+
+Thankfully, much like with the `wilcox.test()` function, we can use a non-parametric test when dealing with two categorical variables by just changing the function name from `chisq.test()` to `fisher.test()`.
+
+```{r chi_q4,exercise=TRUE}
+BeanSurvey %>%
+  tabyl(HHTYPE,SELLBEANS) %>%
     fisher.test()
 ```
+Whichever method we used here we reached the same conclusion - no evidence of relationship between household type and selling beans. But notice that the hypotheses for options 1 and 2 are different. In option one we are comparing differences only in the gender of the head, not consdiering any of the other household composition that exists in the `HHTYPE` variable. And in option 2 we are only comparing the two specific household types.
 
-But you might still see an error! That is because the Fisher test is extremely computationally intensive. So rather trying and possibly overloading your computer memory, an error comes up. 
+Unlike with the `t-test()` we do not change the hypothesis we are testing by using the Fisher test instead. However this test is a lot more computationally intenstive. With even a reasonably small dataset (200 or so observations) you may find that it takes some time for the computer to return the result. This is why the chi-square test is often preferred, since it is always very quick for the computer to calculate!
 
-If you are working on a fast computer you might choose to modify the `workspace` argument to over-ride this by increasing the amount of memory available to R. But please DO NOT try this in this online workbook!
 
-An alternative would be to instead use the `simulate.p.value` argument to take a less computationally intensive, simulation based approach to calculating a p-value.
-
-```{r fisher3,exercise=TRUE}
-Pulse %>%
-  tabyl(Education,ApproveTrump) %>%
-    fisher.test(simulate.p.value=TRUE)
-```
-
-And again, we conclude that there is insufficient evidence to conclude there is a relationship between education level and Trump approval.
 
 ## More tests?
 
@@ -468,35 +527,6 @@ This is, of course, not just true of R but of any analysis software. However wit
 
 When doing a PhD, it is also extremely unlikely that a simple hypothesis test will be sufficient for your analysis. It is likely you will need to be doing some statistical modelling, to better explain the patterns and trends in your data. We will learn about this in the next module!
 
-
-## Appendix: 'Pulse' dataset 
-
-The data we are using in this session is an extract of a survey conducted in the US in June 2018, as part of the Pulse of the Nation series of surveys. This survey was a representative sample of the American population. You can read more about the survey (and others from the same series) <a href="https://thepulseofthenation.com" target="_blank">here</a>. The data has been cleaned and edited slightly for use in this course.
-
-The dataset contains an extract of 356 responses to 10 of the survey questions, and has been imported to R as a data frame called `Pulse`.
-
-A summary of the columns in the dataset is below.
-
-```{r, echo=FALSE,message=FALSE,warning=FALSE}
-library(tidyverse)
-library(knitr)
-
-data.frame(Column=c("Gender","Age","AgeGrp","Race","Income","Education","PoliticalParty","PoliticalView","ApproveTrump","Attractiveness"),
-           Description=c("What gender do you identify with?","What is your age?","Age range","What is your race?",
-                         "About how much money do you make per year? (USD)","What is your highest level of education?",
-                         "In politics today, do you consider yourself a Democrat, a Republican, or Independent?",
-                         "Would you say you are liberal, conservative, or moderate?",
-                         "Do you approve, disapprove, or neither approve nor disapprove of how Donald Trump is handling his job as president?",
-                        "On a scale of 1-10, how physically attractive do you consider yourself?")) %>% kable()
-
-```
-
-
-```{r,echo=FALSE}
-DT::datatable(Pulse)
-```
-
-(You can use the arrow keys on your keyboard to scroll right in case the data table does not fit entirely on your screen)
 
 
 ## References  
